@@ -1475,23 +1475,7 @@
   }
 
   function applyReadOnlyUI() {
-    // 顶部加状态条
-    const bar = document.createElement('div');
-    bar.style.cssText = 'text-align:center;padding:8px 12px;font-size:12px;letter-spacing:1px;border-radius:10px;margin-bottom:14px;font-weight:700;';
-    if (!cloudEnabled) {
-      bar.innerHTML = '📴 <b>本地模式</b> · 数据只保存在你当前浏览器中';
-      bar.style.cssText += 'background:#fff2c2;color:#7a5230;border:1.5px dashed #c99a3d;';
-    } else if (isAdmin) {
-      bar.innerHTML = '🔑 <b>管理员模式</b> · 修改会同步到云端，所有访客可见';
-      bar.style.cssText += 'background:#e3f8e8;color:#2a7d4a;border:1.5px solid #2fa355;';
-    } else {
-      bar.innerHTML = '👁 <b>只读模式</b> · 要修改请使用管理员链接（网址加 ?admin=...）';
-      bar.style.cssText += 'background:#ffd9df;color:#c0392b;border:1.5px solid #d9344a;';
-    }
-    const topBar = document.querySelector('.app .top-bar');
-    topBar.parentNode.insertBefore(bar, topBar.nextSibling);
-
-    // 只读 → 两个顶部按钮禁用
+    // 只读 → 两个顶部按钮禁用（不再显示顶部状态条）
     if (cloudEnabled && !isAdmin) {
       ['btn-manage-players', 'btn-new-match'].forEach(id => {
         const el = document.getElementById(id);
@@ -1741,11 +1725,17 @@
       levels: deepClone(nmDraftLevels),
     };
     writeLS(LS_CFG, config); // 下次打开弹窗保留这份设置
+    // 把选中的选手完整数据带进 pending（避免工作台拿不到）
+    const allPlayers = getPlayers();
+    const selected = Array.from(nmSelectedIds)
+      .map(pid => allPlayers.find(x => x.id === pid))
+      .filter(Boolean);
     const pending = {
       id: matchId,
       no,
       config,
-      playerIds: Array.from(nmSelectedIds),
+      playerIds: selected.map(p => p.id),
+      players: selected.map(p => ({ id: p.id, name: p.name })),
       createdAt: new Date().toISOString(),
     };
     writeLS(LS_PENDING, pending);

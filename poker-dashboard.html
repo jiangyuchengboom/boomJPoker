@@ -1489,11 +1489,7 @@
       </div>
       <div class="buyin-warning" id="buyin-warning">⚠️ 已进入决赛圈（L6+），不可再买入。</div>
       <div class="player-list" id="player-list"></div>
-      <div class="empty-state" id="empty-state">还没有玩家，先在下方添加吧 ♠</div>
-      <div class="add-player">
-        <input type="text" id="new-player-name" placeholder="输入玩家昵称，回车即可添加" maxlength="20">
-        <button id="btn-add-player">+ 添加</button>
-      </div>
+      <div class="empty-state" id="empty-state">⚠️ 本场没有选手——返回主页重新新建牌局并选择选手。</div>
     </div>
 
   </section>
@@ -1648,13 +1644,16 @@
   };
 
   // 如果从新建牌局进来，预填 pending 的选手列表（每人默认已买入 1 手）
-  if (pendingMatch && Array.isArray(pendingMatch.playerIds)) {
-    const roster = readLS(LS_PLAYERS, []);
-    const map = Object.fromEntries(roster.map(p => [p.id, p]));
-    state.players = pendingMatch.playerIds
-      .map(pid => map[pid])
-      .filter(Boolean)
-      .map(p => ({ id: p.id, name: p.name, hands: 1, out: false }));
+  if (pendingMatch) {
+    // 优先用 pending.players（新建牌局时已经把完整数据带过来，不受云端/本地差异影响）
+    let roster = Array.isArray(pendingMatch.players) ? pendingMatch.players : [];
+    // 兜底：旧版 pending 可能只有 playerIds，这里尝试从本地 roster 匹配
+    if (!roster.length && Array.isArray(pendingMatch.playerIds)) {
+      const local = readLS(LS_PLAYERS, []);
+      const map = Object.fromEntries(local.map(p => [p.id, p]));
+      roster = pendingMatch.playerIds.map(pid => map[pid]).filter(Boolean);
+    }
+    state.players = roster.map(p => ({ id: p.id, name: p.name, hands: 1, out: false }));
   }
 
   // ---------- DOM ----------
@@ -2099,8 +2098,8 @@
   btnSkip.addEventListener('click', skipNext);
   btnPrev.addEventListener('click', () => gotoLevel(state.currentIdx - 1, false));
   btnNext.addEventListener('click', () => gotoLevel(state.currentIdx + 1, false));
-  btnAddPlayer.addEventListener('click', addPlayer);
-  nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addPlayer(); });
+  if (btnAddPlayer) btnAddPlayer.addEventListener('click', addPlayer);
+  if (nameInput) nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addPlayer(); });
 
   // 空格快速启停
   document.addEventListener('keydown', (e) => {
