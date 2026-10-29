@@ -1537,6 +1537,56 @@
   // 若是从新建牌局进来的，优先用 pending 中的配置
   const pendingMatch = readLS(LS_PENDING, null);
 
+  // ====================================================
+  //  云端共享存储（JSONBin.io）—— 和 index.html 使用同一个 CLOUD 配置
+  // ====================================================
+  // ⚠️ 这里的三个占位符要和 index.html 中保持一致
+  const CLOUD = {
+    BIN_ID:      '6ae307a8ffd5d16053950807',
+    ACCESS_KEY:  '$2a$10$ARSfx6y9kQhNiw7wjOeLqOCGJwsHRg6NncCEgmch8c0ID5xMAaNpK',
+    MASTER_KEY:  '$2a$10$W51RUfX0v37fbs9oYcxMsuvvnVHwNIPH9NTsC2ZxM42pxhzJ6Tzfa',
+    ADMIN_PASS:  'jiangyucheng',
+  };
+  const urlParams = new URLSearchParams(location.search);
+  const isAdmin = !!CLOUD.ADMIN_PASS && urlParams.get('admin') === CLOUD.ADMIN_PASS;
+  const cloudEnabled = !!CLOUD.BIN_ID && !!CLOUD.ACCESS_KEY;
+
+  async function cloudPushMatch(match) {
+    if (!cloudEnabled) return false;
+    if (!isAdmin) { alert('🔒 只读模式：牌局无法同步到云端。'); return false; }
+    try {
+      const r = await fetch(`https://api.jsonbin.io/v3/b/${CLOUD.BIN_ID}/latest`, {
+        headers: { 'X-Access-Key': CLOUD.ACCESS_KEY, 'X-Bin-Meta': 'false' }
+      });
+      if (!r.ok) throw new Error('load HTTP ' + r.status);
+      const data = await r.json();
+      const payload = {
+        players: Array.isArray(data.players) ? data.players : [],
+        matches: Array.isArray(data.matches) ? data.matches : [],
+      };
+      payload.matches.push(match);
+      const w = await fetch(`https://api.jsonbin.io/v3/b/${CLOUD.BIN_ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': CLOUD.MASTER_KEY,
+          'X-Bin-Versioning': 'false',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!w.ok) throw new Error('save HTTP ' + w.status);
+      return true;
+    } catch (e) {
+      console.warn('[JSONBin] push match failed:', e);
+      alert('⚠️ 同步到云端失败：' + e.message + '\n\n本场比赛已保存在本机，但其他人暂时看不到。请检查网络或密钥配置后在主页重试。');
+      return false;
+    }
+  }
+
+  function backHref() {
+    return 'index.html' + (isAdmin ? ('?admin=' + encodeURIComponent(CLOUD.ADMIN_PASS)) : '');
+  }
+
   // 把配置里的 levels 展开成运行时用的 LEVELS 列表（lvl 名称 / final 标志 由索引推导）
   function expandLevels(cfg) {
     return cfg.levels.map((L, i) => ({
@@ -1848,7 +1898,7 @@
     modal.classList.add('show');
   }
 
-  function saveMatchAndExit(rank, prizes, pool) {
+  async function saveMatchAndExit(rank, prizes, pool) {
     const matches = readLS(LS_MATCHES, []);
     const pending = pendingMatch || {};
     const buyins = {};
@@ -1864,12 +1914,18 @@
       prizes,
       playedAt: new Date().toISOString(),
     };
+    // 本地也存一份
     matches.push(match);
     writeLS(LS_MATCHES, matches);
     try { localStorage.removeItem(LS_PENDING); } catch (e) {}
     state.ended = true;
+    // 若有云端，同步过去
+    if (cloudEnabled) {
+      const ok = await cloudPushMatch(match);
+      if (!ok) return; // 失败时让用户看到提示，不自动跳转
+    }
     alert(`✅ 比赛已保存\n\n🥇 ${nameOf(rank.gold)}  ¥${prizes.gold}\n🥈 ${nameOf(rank.silver)}  ¥${prizes.silver}\n🥉 ${nameOf(rank.bronze)}  ¥${prizes.bronze}`);
-    location.href = 'index.html';
+    location.href = backHref();
   }
   function nameOf(id) {
     const p = state.players.find(x => x.id === id);
@@ -2196,7 +2252,7 @@
         : '返回主页？';
       if (!confirm(msg)) return;
       try { localStorage.removeItem(LS_PENDING); } catch (e) {}
-      location.href = 'index.html';
+      location.href = backHref();
     });
   }
   // 旧版齿轮弹窗相关事件（若按钮不存在就跳过）

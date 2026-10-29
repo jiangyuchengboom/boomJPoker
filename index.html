@@ -1145,6 +1145,67 @@
 
 <script>
   // ====================================================
+  //  云端共享存储（JSONBin.io）
+  // ====================================================
+  // ⚠️ 使用前，把下面三个占位符替换成你在 jsonbin.io 拿到的值。
+  //    若 BIN_ID 为空字符串，页面退化为「本地离线模式」，和之前一样只在本机存。
+  const CLOUD = {
+    BIN_ID:      '6ae307a8ffd5d16053950807',
+    ACCESS_KEY:  '$2a$10$ARSfx6y9kQhNiw7wjOeLqOCGJwsHRg6NncCEgmch8c0ID5xMAaNpK',
+    MASTER_KEY:  '$2a$10$W51RUfX0v37fbs9oYcxMsuvvnVHwNIPH9NTsC2ZxM42pxhzJ6Tzfa',
+    ADMIN_PASS:  'jiangyucheng',  // 管理员口令：网址加 ?admin=这段 才能写入
+  };
+
+  // 是否管理员（有写权限）？URL 带 ?admin=xxx 且与 ADMIN_PASS 匹配
+  const urlParams = new URLSearchParams(location.search);
+  const isAdmin = !!CLOUD.ADMIN_PASS && urlParams.get('admin') === CLOUD.ADMIN_PASS;
+  const cloudEnabled = !!CLOUD.BIN_ID && !!CLOUD.ACCESS_KEY;
+
+  // 云端内存缓存 + 载入 Promise
+  let cloudCache = null;
+
+  async function cloudLoad() {
+    if (!cloudEnabled) return null;
+    try {
+      const r = await fetch(`https://api.jsonbin.io/v3/b/${CLOUD.BIN_ID}/latest`, {
+        headers: { 'X-Access-Key': CLOUD.ACCESS_KEY, 'X-Bin-Meta': 'false' }
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      cloudCache = {
+        players: Array.isArray(data.players) ? data.players : [],
+        matches: Array.isArray(data.matches) ? data.matches : [],
+      };
+      return cloudCache;
+    } catch (e) {
+      console.warn('[JSONBin] load failed:', e);
+      cloudCache = { players: [], matches: [] };
+      return cloudCache;
+    }
+  }
+
+  async function cloudSave() {
+    if (!cloudEnabled || !isAdmin || !cloudCache) return false;
+    try {
+      const r = await fetch(`https://api.jsonbin.io/v3/b/${CLOUD.BIN_ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': CLOUD.MASTER_KEY,
+          'X-Bin-Versioning': 'false',
+        },
+        body: JSON.stringify(cloudCache),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return true;
+    } catch (e) {
+      console.warn('[JSONBin] save failed:', e);
+      alert('⚠️ 同步到云端失败，请检查网络或密钥配置。');
+      return false;
+    }
+  }
+
+  // ====================================================
   //  数据层 —— localStorage
   // ====================================================
   const LS_PLAYERS = 'poker.players.v1';   // [{id, name, createdAt}]
@@ -1211,10 +1272,12 @@
     if (splash.classList.contains('leaving')) return;
     splash.classList.add('leaving');
     clearTimeout(splashTimer);
-    setTimeout(() => {
+    setTimeout(async () => {
       splash.style.display = 'none';
       app.classList.add('show');
+      if (cloudEnabled) await cloudLoad();
       renderHome();
+      applyReadOnlyUI();
     }, 600);
   }
   splash.addEventListener('click', dismissSplash);
@@ -1225,10 +1288,32 @@
   // ====================================================
   let currentRange = 'all';
 
-  function getPlayers() { return readLS(LS_PLAYERS, []); }
-  function savePlayers(p) { writeLS(LS_PLAYERS, p); }
-  function getMatches() { return readLS(LS_MATCHES, []); }
-  function saveMatches(m) { writeLS(LS_MATCHES, m); }
+  function getPlayers() {
+    if (cloudEnabled && cloudCache) return cloudCache.players;
+    return readLS(LS_PLAYERS, []);
+  }
+  function savePlayers(p) {
+    if (cloudEnabled) {
+      if (!isAdmin) { alert('🔒 只读模式：请使用管理员链接访问（网址加 ?admin=...）。'); return; }
+      cloudCache.players = p;
+      cloudSave();
+      return;
+    }
+    writeLS(LS_PLAYERS, p);
+  }
+  function getMatches() {
+    if (cloudEnabled && cloudCache) return cloudCache.matches;
+    return readLS(LS_MATCHES, []);
+  }
+  function saveMatches(m) {
+    if (cloudEnabled) {
+      if (!isAdmin) { alert('🔒 只读模式：请使用管理员链接访问（网址加 ?admin=...）。'); return; }
+      cloudCache.matches = m;
+      cloudSave();
+      return;
+    }
+    writeLS(LS_MATCHES, m);
+  }
 
   function filterMatches(range) {
     const all = getMatches();
@@ -1387,6 +1472,36 @@
   function renderHome() {
     renderRank();
     renderMatches();
+  }
+
+  function applyReadOnlyUI() {
+    // 顶部加状态条
+    const bar = document.createElement('div');
+    bar.style.cssText = 'text-align:center;padding:8px 12px;font-size:12px;letter-spacing:1px;border-radius:10px;margin-bottom:14px;font-weight:700;';
+    if (!cloudEnabled) {
+      bar.innerHTML = '📴 <b>本地模式</b> · 数据只保存在你当前浏览器中';
+      bar.style.cssText += 'background:#fff2c2;color:#7a5230;border:1.5px dashed #c99a3d;';
+    } else if (isAdmin) {
+      bar.innerHTML = '🔑 <b>管理员模式</b> · 修改会同步到云端，所有访客可见';
+      bar.style.cssText += 'background:#e3f8e8;color:#2a7d4a;border:1.5px solid #2fa355;';
+    } else {
+      bar.innerHTML = '👁 <b>只读模式</b> · 要修改请使用管理员链接（网址加 ?admin=...）';
+      bar.style.cssText += 'background:#ffd9df;color:#c0392b;border:1.5px solid #d9344a;';
+    }
+    const topBar = document.querySelector('.app .top-bar');
+    topBar.parentNode.insertBefore(bar, topBar.nextSibling);
+
+    // 只读 → 两个顶部按钮禁用
+    if (cloudEnabled && !isAdmin) {
+      ['btn-manage-players', 'btn-new-match'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.disabled = true;
+        el.style.opacity = '.4';
+        el.style.cursor = 'not-allowed';
+        el.title = '只读模式下不可操作';
+      });
+    }
   }
 
   function fmtDateTime(iso) {
@@ -1635,8 +1750,9 @@
     };
     writeLS(LS_PENDING, pending);
     closeModal('new-match-modal');
-    // 跳转到工作台
-    location.href = 'poker-dashboard.html';
+    // 跳转到工作台（把管理员参数一起传过去）
+    const adminQ = isAdmin ? ('?admin=' + encodeURIComponent(CLOUD.ADMIN_PASS)) : '';
+    location.href = 'poker-dashboard.html' + adminQ;
   });
 
   // 启动
