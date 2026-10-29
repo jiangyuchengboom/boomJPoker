@@ -1113,7 +1113,7 @@
       <section class="nm-section">
         <div class="nm-section-title">③ 买入规则</div>
         <div class="cfg-grid cfg-buyin">
-          <label>每手买入 (¥) <input type="number" id="nm-buyin-price" min="1" step="1"></label>
+          <label>每手买入 <input type="number" id="nm-buyin-price" min="1" step="1"></label>
           <label>买入上限 (手) <input type="number" id="nm-buyin-max" min="1" max="20" step="1"></label>
         </div>
       </section>
@@ -1391,7 +1391,7 @@
               <th>冠</th>
               <th>亚</th>
               <th>季</th>
-              <th>总奖金</th>
+              <th>Bonus</th>
               <th>总买入</th>
             </tr>
           </thead>
@@ -1408,8 +1408,8 @@
                 <td class="ggold">${r.golds || '-'}</td>
                 <td class="ssilver">${r.silvers || '-'}</td>
                 <td class="bbronze">${r.bronzes || '-'}</td>
-                <td class="mono">¥${r.totalPool}</td>
-                <td class="mono">¥${r.totalBuyin}</td>
+                <td class="mono">${r.totalPool}</td>
+                <td class="mono">${r.totalBuyin}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -1438,7 +1438,7 @@
               <div class="match-head">
                 <span class="match-no">#${m.no} · ${escapeHtml(m.config?.title || '德州酒局')}</span>
                 <div style="display:flex;align-items:center;gap:6px;">
-                  <span class="match-pool">奖池 ¥${m.pool || 0}</span>
+                  <span class="match-pool">Bonus ${m.pool || 0}</span>
                   <button class="match-del" data-mdel="${m.id}" title="删除本场牌局（选手积分会自动重算）">✕</button>
                 </div>
               </div>
@@ -1462,7 +1462,7 @@
         const target = matches.find(m => m.id === id);
         if (!target) return;
         const label = `#${target.no} · ${target.config?.title || '德州酒局'}（${fmtDateTime(target.playedAt)}）`;
-        if (!confirm(`确认删除牌局 ${label}？\n\n⚠️ 本场的冠亚季军积分将同步被扣除；总买入 / 总奖金 / 局数也会同步减少。此操作不可撤销。`)) return;
+        if (!confirm(`确认删除牌局 ${label}？\n\n⚠️ 本场的冠亚季军积分将同步被扣除；总买入 / Bonus / 局数也会同步减少。此操作不可撤销。`)) return;
         saveMatches(matches.filter(m => m.id !== id));
         renderHome();
       });

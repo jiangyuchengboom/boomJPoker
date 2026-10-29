@@ -1301,7 +1301,7 @@
       <section class="cfg-section">
         <div class="cfg-section-title">② 买入规则</div>
         <div class="cfg-grid cfg-buyin">
-          <label>每手买入 (¥)
+          <label>每手买入
             <input type="number" id="cfg-buyin-price" min="1" step="1">
           </label>
           <label>买入上限 (手)
@@ -1371,7 +1371,7 @@
       </div>
 
       <div class="section gold">
-        <div class="section-title">🏆 奖金分配</div>
+        <div class="section-title">🏆 Bonus 分配</div>
         <div class="prizes">
           <div class="prize gold">
             <div class="medal">🥇</div>
@@ -1412,7 +1412,7 @@
           <!-- JS 渲染 -->
         </tbody>
       </table>
-      <div class="note" id="blinds-note">💡 每手买入统一 ¥200，级别越高同样的 ¥200 换到的码量越多——越早入局越划算。</div>
+      <div class="note" id="blinds-note">💡 每手买入统一 200，级别越高同样的 200 换到的码量越多——越早入局越划算。</div>
     </div>
   </aside>
 
@@ -1456,24 +1456,24 @@
     <div class="panel pool-panel">
       <div class="pool-row">
         <div class="pool-cell pool-cell-main">
-          <div class="pool-cell-title">当前奖金池</div>
-          <div class="pool-cell-value" id="pool-total">¥0</div>
+          <div class="pool-cell-title">当前 Bonus</div>
+          <div class="pool-cell-value" id="pool-total">0</div>
         </div>
         <div class="pool-divider"></div>
         <div class="pool-cell pool-cell-gold">
           <div class="pool-cell-title">🥇 冠军 <span class="pool-pct-inline">50%</span></div>
-          <div class="pool-cell-value" id="pool-1">¥0</div>
+          <div class="pool-cell-value" id="pool-1">0</div>
         </div>
         <div class="pool-cell pool-cell-silver">
           <div class="pool-cell-title">🥈 亚军 <span class="pool-pct-inline">33.3%</span></div>
-          <div class="pool-cell-value" id="pool-2">¥0</div>
+          <div class="pool-cell-value" id="pool-2">0</div>
         </div>
         <div class="pool-cell pool-cell-bronze">
           <div class="pool-cell-title">🥉 季军 <span class="pool-pct-inline">16.7%</span></div>
-          <div class="pool-cell-value" id="pool-3">¥0</div>
+          <div class="pool-cell-value" id="pool-3">0</div>
         </div>
       </div>
-      <div class="pool-hint" id="pool-hint">奖池 = 全场买入之和，玩家买入时实时更新</div>
+      <div class="pool-hint" id="pool-hint">Bonus = 全场买入之和，玩家买入时实时更新</div>
     </div>
 
     <!-- 玩家面板 -->
@@ -1484,7 +1484,7 @@
           <span class="stat-chip" id="stat-players">0 人</span>
           <span class="stat-chip" id="stat-alive">存活 0</span>
           <span class="stat-chip red" id="stat-buyins">0 手</span>
-          <span class="stat-chip green" id="stat-money">¥0</span>
+          <span class="stat-chip green" id="stat-money">0</span>
         </div>
       </div>
       <div class="buyin-warning" id="buyin-warning">⚠️ 已进入决赛圈（L6+），不可再买入。</div>
@@ -1691,8 +1691,8 @@
     const cap = price * max;
     const finalLvl = 'L' + (config.finalIndex + 1);
     const rules = [
-      `每手买入恒为 <b>¥${price}</b>，不随级别上涨`,
-      `每人最多 <b>买入 ${max} 手</b>（即 ¥${cap} 封顶）`,
+      `每手买入恒为 <b>${price}</b>，不随级别上涨`,
+      `每人最多 <b>买入 ${max} 手</b>（即 ${cap} 封顶）`,
       `随级别上升，<b>每手兑换的码量</b>会变多`,
       `进入 <b>决赛圈 ${finalLvl} 后不可再买入</b>`,
     ];
@@ -1701,10 +1701,10 @@
     ).join('');
 
     // 盲注表下的提示
-    $('blinds-note').innerHTML = `💡 每手买入统一 ¥${price}，级别越高同样的 ¥${price} 换到的码量越多——越早入局越划算。`;
+    $('blinds-note').innerHTML = `💡 每手买入统一 ${price}，级别越高同样的 ${price} 换到的码量越多——越早入局越划算。`;
 
     // 奖池提示
-    $('pool-hint').textContent = `奖池 = 全场买入之和（每手 ¥${price}），玩家买入时实时更新`;
+    $('pool-hint').textContent = `Bonus = 全场买入之和（每手 ${price}），玩家买入时实时更新`;
   }
 
   // ---------- 盲注表 ----------
@@ -1859,10 +1859,10 @@
     const p2 = Math.round(totalMoney * 0.333);
     const p3 = Math.max(0, totalMoney - p1 - p2);
     $('end-info-text').innerHTML =
-      `总奖池 <b>¥${totalMoney}</b> · 共 <b>${state.players.length}</b> 人 · 累计买入 <b>${state.players.reduce((s,p)=>s+p.hands,0)}</b> 手`;
-    $('end-prize-gold').textContent = `¥${p1}`;
-    $('end-prize-silver').textContent = `¥${p2}`;
-    $('end-prize-bronze').textContent = `¥${p3}`;
+      `总 Bonus <b>${totalMoney}</b> · 共 <b>${state.players.length}</b> 人 · 累计买入 <b>${state.players.reduce((s,p)=>s+p.hands,0)}</b> 手`;
+    $('end-prize-gold').textContent = `${p1}`;
+    $('end-prize-silver').textContent = `${p2}`;
+    $('end-prize-bronze').textContent = `${p3}`;
 
     const buildOpts = (exclude) => state.players
       .map(p => `<option value="${p.id}" ${exclude.includes(p.id) ? 'disabled' : ''}>${escapeHtml(p.name)}${p.out ? '（已出局）' : ''}</option>`)
@@ -1923,7 +1923,7 @@
       const ok = await cloudPushMatch(match);
       if (!ok) return; // 失败时让用户看到提示，不自动跳转
     }
-    alert(`✅ 比赛已保存\n\n🥇 ${nameOf(rank.gold)}  ¥${prizes.gold}\n🥈 ${nameOf(rank.silver)}  ¥${prizes.silver}\n🥉 ${nameOf(rank.bronze)}  ¥${prizes.bronze}`);
+    alert(`✅ 比赛已保存\n\n🥇 ${nameOf(rank.gold)}  ${prizes.gold}\n🥈 ${nameOf(rank.silver)}  ${prizes.silver}\n🥉 ${nameOf(rank.bronze)}  ${prizes.bronze}`);
     location.href = backHref();
   }
   function nameOf(id) {
@@ -2031,11 +2031,11 @@
       if (p.out) addTitle = '已出局，不可买入';
       else if (finalLocked) addTitle = '决赛圈不可买入';
       else if (p.hands >= MAX_HANDS) addTitle = '已达上限 4 手';
-      else addTitle = '再买一手 +¥200';
+      else addTitle = '再买一手 +200';
       const outTag = p.out ? '<span class="out-tag">OUT</span>' : '';
       const outBtnLabel = p.out ? '♻' : '✖';
       const outBtnCls = p.out ? 'out-btn revive' : 'out-btn';
-      const outBtnTitle = p.out ? '误操作？点此恢复在场状态（买入金额本就计入奖池，不受影响）' : '标记该玩家被淘汰（将沉到列表底部，买入金额仍计入奖池）';
+      const outBtnTitle = p.out ? '误操作？点此恢复在场状态（买入金额本就计入 Bonus，不受影响）' : '标记该玩家被淘汰（将沉到列表底部，买入金额仍计入 Bonus）';
       return `
         <div class="player-row${p.out ? ' out' : ''}">
           <span class="player-avatar ${color}">${escapeHtml(initial)}</span>
@@ -2043,7 +2043,7 @@
           <div class="pips" title="已买入 ${p.hands} / ${MAX_HANDS} 手">${pips}</div>
           <div class="player-info">
             <span class="count">${p.hands} 手</span>
-            <span class="amount">¥${p.hands * BUYIN_PRICE}</span>
+            <span class="amount">${p.hands * BUYIN_PRICE}</span>
           </div>
           <button class="add-btn" data-add="${p.id}" ${addDisabled ? 'disabled' : ''}
                   title="${addTitle}">+</button>
@@ -2071,21 +2071,21 @@
     statPlayers.textContent = `${nPlayers} 人`;
     $('stat-alive').textContent = `存活 ${nAlive}`;
     statBuyins.textContent = `${totalHands} 手`;
-    statMoney.textContent = `¥${totalMoney}`;
+    statMoney.textContent = `${totalMoney}`;
 
-    // 更新奖金预览（左侧小字）
+    // 更新 Bonus 预览（左侧小字）
     const p1 = Math.round(totalMoney * 0.5);
     const p2 = Math.round(totalMoney * 0.333);
     const p3 = Math.max(0, totalMoney - p1 - p2); // 剩下给季军，和为总额
-    $('prize-1').textContent = totalMoney ? `≈ ¥${p1}` : '—';
-    $('prize-2').textContent = totalMoney ? `≈ ¥${p2}` : '—';
-    $('prize-3').textContent = totalMoney ? `≈ ¥${p3}` : '—';
+    $('prize-1').textContent = totalMoney ? `≈ ${p1}` : '—';
+    $('prize-2').textContent = totalMoney ? `≈ ${p2}` : '—';
+    $('prize-3').textContent = totalMoney ? `≈ ${p3}` : '—';
 
-    // 更新右侧奖金池
-    $('pool-total').textContent = `¥${totalMoney}`;
-    $('pool-1').textContent = `¥${p1}`;
-    $('pool-2').textContent = `¥${p2}`;
-    $('pool-3').textContent = `¥${p3}`;
+    // 更新右侧 Bonus
+    $('pool-total').textContent = `${totalMoney}`;
+    $('pool-1').textContent = `${p1}`;
+    $('pool-2').textContent = `${p2}`;
+    $('pool-3').textContent = `${p3}`;
   }
 
   function escapeHtml(s) {
