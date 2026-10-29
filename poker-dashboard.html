@@ -1,0 +1,2224 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>德州酒局 · 工作台</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Hiragino Sans GB", "冬青黑体简体中文", "PingFang SC", "Microsoft YaHei", -apple-system, system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 10% 10%, #ffe7ec 0%, transparent 40%),
+      radial-gradient(circle at 90% 20%, #fff4c2 0%, transparent 42%),
+      radial-gradient(circle at 20% 90%, #e8ffe3 0%, transparent 45%),
+      radial-gradient(circle at 85% 85%, #e4ecff 0%, transparent 45%),
+      #fff8ee;
+    min-height: 100vh;
+    padding: 20px;
+    color: #231f20;
+  }
+
+  .layout {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 30fr 70fr;
+    gap: 20px;
+  }
+
+  /* ---------- 左侧海报（简化版） ---------- */
+  .poster {
+    background: #fffdf6;
+    border-radius: 24px;
+    padding: 22px 22px 26px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset,
+                0 20px 50px -24px rgba(60, 20, 10, .25);
+    border: 2px dashed #ffd1a8;
+    position: relative;
+    overflow: hidden;
+    height: fit-content;
+  }
+  .corner {
+    position: absolute;
+    font-size: 56px;
+    opacity: .08;
+    user-select: none;
+    pointer-events: none;
+    line-height: 1;
+  }
+  .corner.tl { top: 8px; left: 10px; }
+  .corner.tr { top: 8px; right: 10px; color:#d9344a; opacity:.1; }
+  .corner.bl { bottom: 4px; left: 10px; color:#d9344a; opacity:.1; }
+  .corner.br { bottom: 4px; right: 10px; }
+
+  .banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #8a5a2b;
+    margin-bottom: 8px;
+  }
+  .banner .line { flex: 0 0 36px; height: 1px; background: #d7b48a; }
+
+  .banner, .subtitle { display: none; }
+
+  .poster-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 2px 0 14px;
+    flex-wrap: wrap;
+  }
+
+  h1.title {
+    font-family: "Hiragino Sans GB", "冬青黑体简体中文", "PingFang SC", sans-serif;
+    font-size: 24px;
+    margin: 0;
+    line-height: 1.15;
+    letter-spacing: 1.5px;
+    color: #1a1a1a;
+    text-shadow: 2px 2px 0 #ffd1a8;
+    white-space: nowrap;
+  }
+
+  .meta-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #7a5230;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .subtitle .sep { color:#d9b382; margin: 0 6px; }
+
+  .meta-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 12px 0 16px;
+  }
+  .chip {
+    background: #fff;
+    border: 1.5px solid #231f20;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 11px;
+    box-shadow: 2px 2px 0 #231f20;
+    white-space: nowrap;
+  }
+  .chip.red { border-color:#d9344a; box-shadow: 2px 2px 0 #d9344a; color:#d9344a; }
+
+  .section {
+    background: #fff;
+    border: 2px solid #231f20;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    box-shadow: 3px 3px 0 #231f20;
+  }
+  .section.red { box-shadow: 3px 3px 0 #d9344a; border-color: #d9344a; }
+  .section.gold { box-shadow: 3px 3px 0 #c99a3d; border-color: #c99a3d; }
+
+  .section-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    padding: 2px 8px;
+    background: #fff2c2;
+    border-radius: 6px;
+    transform: rotate(-1deg);
+  }
+  .section.red .section-title { background:#ffd9df; }
+  .section.gold .section-title { background:#ffeec2; }
+
+  /* 左侧并排两栏（买入规则 + 奖金分配） */
+  .side-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .side-grid .section { margin-bottom: 0; padding: 10px 12px; }
+  .side-grid .section-title { font-size: 13px; margin-bottom: 6px; padding: 1px 6px; }
+  .side-grid .buyin-list { gap: 3px; }
+  .side-grid .buyin-list li { font-size: 12px; line-height: 1.35; }
+  .side-grid .buyin-list .num {
+    min-width: 16px; height: 16px; line-height: 16px; font-size: 10px;
+  }
+  /* 奖金：三行竖排、每行横向紧凑 */
+  .side-grid .prizes {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .side-grid .prize {
+    padding: 4px 10px;
+    display: grid;
+    grid-template-columns: 20px 1fr auto auto;
+    align-items: center;
+    column-gap: 8px;
+    text-align: left;
+    border-width: 1.5px;
+    border-radius: 8px;
+  }
+  .side-grid .prize .medal { font-size: 16px; line-height: 1; }
+  .side-grid .prize .rank { margin: 0; font-size: 11px; letter-spacing: 1px; color: #7a5230; }
+  .side-grid .prize .pct { font-size: 13px; font-weight: 900; }
+  .side-grid .prize .amount {
+    font-size: 11px;
+    margin: 0;
+    min-height: 0;
+    opacity: .85;
+    min-width: 48px;
+    text-align: right;
+  }
+  .side-grid .note { font-size: 11px; padding: 4px 8px; margin-top: 6px; line-height: 1.4; }
+
+  .buyin-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .buyin-list li {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    font-size: 13px;
+  }
+  .buyin-list .num {
+    display: inline-block;
+    min-width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    background: #231f20;
+    color: #fff8ee;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  table.levels {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 11.5px;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1.5px solid #231f20;
+  }
+  table.levels th, table.levels td {
+    padding: 5px 3px;
+    text-align: center;
+    border-bottom: 1px solid #efe3cf;
+  }
+  table.levels thead th {
+    background: #231f20;
+    color: #fff8ee;
+    font-weight: 700;
+  }
+  table.levels tbody tr:nth-child(odd) td { background: #fffaf0; }
+  table.levels tbody tr:nth-child(even) td { background: #fff; }
+  table.levels .lvl { font-weight: 800; }
+  table.levels tr.final td { background: #fff2c2 !important; font-weight: 700; }
+  table.levels tr.final .lvl { color: #c0392b; }
+  table.levels tr.current td {
+    background: #ffd9df !important;
+    box-shadow: inset 0 0 0 2px #d9344a;
+  }
+  .final-badge {
+    display: inline-block;
+    background: #d9344a;
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: 3px;
+    vertical-align: 1px;
+  }
+  .dash { color: #bbb; }
+  .no-buyin {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #c0392b;
+    background: #ffd9df;
+    padding: 1px 6px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+
+  .prizes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .prize {
+    text-align: center;
+    padding: 10px 6px 10px;
+    border-radius: 12px;
+    border: 2px solid #231f20;
+    background: #fff;
+  }
+  .prize .medal { font-size: 24px; line-height: 1; }
+  .prize .rank { font-size: 12px; margin: 2px 0 2px; letter-spacing: 1px; color: #7a5230; }
+  .prize .pct { font-size: 20px; font-weight: 900; }
+  .prize .amount { font-size: 12px; color: #8a5a2b; margin-top: 2px; min-height: 15px; }
+  .prize.gold { background: linear-gradient(180deg,#fff4c2,#ffe08a); }
+  .prize.silver { background: linear-gradient(180deg,#f0f0f0,#d9d9d9); }
+  .prize.bronze { background: linear-gradient(180deg,#ffe0c2,#ffc58a); }
+
+  .note {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6a4a2a;
+    line-height: 1.6;
+    background: #fff8e0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border-left: 3px solid #c99a3d;
+  }
+
+  /* ---------- 右侧工作台 ---------- */
+  .console {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .panel {
+    background: #fff;
+    border-radius: 20px;
+    border: 2px solid #231f20;
+    box-shadow: 4px 4px 0 #231f20;
+    padding: 20px;
+  }
+  .panel.timer-panel {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2b1a2a 100%);
+    color: #fff8ee;
+    border-color: #1a1a1a;
+    box-shadow: 4px 4px 0 #d9344a;
+    padding: 36px 28px 24px;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* 新：三栏主体 */
+  .timer-core {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    column-gap: 28px;
+    row-gap: 6px;
+    align-items: center;
+    justify-items: center;
+    padding: 18px 10px 12px;
+  }
+  .timer-side,
+  .timer-center {
+    display: contents;  /* 让子元素直接参与外层 grid */
+  }
+  .timer-side .side-label,
+  .timer-center .center-label {
+    grid-row: 1;
+    text-align: center;
+  }
+  .timer-side .side-value,
+  .timer-center .countdown {
+    grid-row: 2;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .timer-side .side-sub,
+  .timer-center .center-sub {
+    grid-row: 3;
+    text-align: center;
+  }
+  /* 列定位 */
+  .timer-level .side-label,
+  .timer-level .side-value,
+  .timer-level .side-sub { grid-column: 1; }
+  .timer-center .center-label,
+  .timer-center .countdown,
+  .timer-center .center-sub { grid-column: 2; }
+  .timer-blinds .side-label,
+  .timer-blinds .side-value,
+  .timer-blinds .side-sub { grid-column: 3; }
+  .timer-side { text-align: center; }
+  .side-label,
+  .center-label {
+    font-size: 14px;
+    color: #ffd1a8;
+    letter-spacing: 3px;
+    opacity: .7;
+    margin-bottom: 10px;
+  }
+  .side-value {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 96px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    letter-spacing: 2px;
+    text-shadow: 0 0 24px rgba(255, 220, 180, .35);
+  }
+  .timer-blinds .side-value b {
+    color: #fff;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-weight: 800;
+  }
+  .timer-blinds .side-value .slash {
+    color: #ffd1a8;
+    margin: 0 10px;
+    opacity: .55;
+    font-weight: 400;
+  }
+  .side-sub,
+  .center-sub {
+    font-size: 15px;
+    color: #ffd1a8;
+    opacity: .75;
+    margin-top: 10px;
+    letter-spacing: 1px;
+  }
+  .center-sub .progress-bar {
+    max-width: 240px;
+    margin: 6px auto 0;
+  }
+  .timer-center { text-align: center; }
+
+  .timer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .level-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #d9344a;
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 999px;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    box-shadow: 0 4px 12px rgba(217, 52, 74, .35);
+  }
+  .level-tag.final { background: #c99a3d; box-shadow: 0 4px 12px rgba(201, 154, 61, .4); }
+  .level-nav {
+    display: flex;
+    gap: 6px;
+  }
+  .nav-btn {
+    background: rgba(255,255,255,.08);
+    color: #fff8ee;
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+  }
+  .nav-btn:hover:not(:disabled) { background: rgba(255,255,255,.18); }
+  .nav-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  .blinds {
+    text-align: center;
+    font-size: 20px;
+    color: #ffd1a8;
+    letter-spacing: 2px;
+    margin: 10px 0 4px;
+    font-weight: 600;
+  }
+  .blinds b {
+    color: #fff;
+    font-size: 32px;
+    margin: 0 6px;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-weight: 900;
+    text-shadow: 0 0 12px rgba(255, 220, 180, .4);
+  }
+
+  .countdown {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 96px;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1;
+    letter-spacing: 2px;
+    margin: 0;
+    color: #fff;
+    text-shadow: 0 0 24px rgba(255, 220, 180, .4);
+  }
+  .countdown.warn { color: #ffb84d; animation: pulse 1s infinite; }
+  .countdown.danger { color: #ff5c6a; animation: pulse .6s infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+  }
+
+  .level-tag, .blinds { display: none; }  /* 旧样式，已被 timer-core 取代 */
+
+  .progress-bar {
+    height: 5px;
+    background: rgba(255,255,255,.15);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 2px 0 0;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #ffd1a8, #d9344a);
+    border-radius: 999px;
+    transition: width 1s linear;
+  }
+
+  .controls {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    opacity: .72;
+    transition: opacity .2s;
+  }
+  .controls:hover { opacity: 1; }
+  .ctrl-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.25);
+    background: rgba(255,255,255,.08);
+    color: #fff8ee;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform .1s, background .15s, border-color .15s;
+    backdrop-filter: blur(4px);
+  }
+  .ctrl-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,.18);
+    border-color: rgba(255,255,255,.5);
+  }
+  .ctrl-btn:active:not(:disabled) { transform: translateY(1px); }
+  .ctrl-btn.start { color: #a8f0b9; }
+  .ctrl-btn.pause { color: #ffe08a; }
+  .ctrl-btn.resume { color: #a8f0b9; }
+  .ctrl-btn.end { color: #ff9aa6; }
+  .ctrl-btn.next { color: #a9c0ff; }
+  .ctrl-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* 把级别左右切换按钮也挪进 controls，样式再弱化 */
+  .controls .level-nav {
+    display: flex;
+    gap: 4px;
+    margin-left: 4px;
+    padding-left: 10px;
+    border-left: 1px solid rgba(255,255,255,.2);
+  }
+
+  .next-hint {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 18px;
+    color: #ffd1a8;
+    letter-spacing: 2px;
+    opacity: .9;
+    font-weight: 700;
+  }
+  .next-hint .nxt-key {
+    color: #fff;
+    font-weight: 900;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    margin: 0 2px;
+  }
+
+  /* 玩家面板 */
+  .players-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .players-head h2 {
+    margin: 0;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .buyin-stats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .stat-chip {
+    background: #fff8e0;
+    border: 1px solid #c99a3d;
+    color: #7a5230;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .stat-chip.red { background: #ffd9df; border-color: #d9344a; color: #c0392b; }
+  .stat-chip.green { background: #e3f8e8; border-color: #2fa355; color: #2a7d4a; }
+
+  .buyin-warning {
+    background: #fff8e0;
+    border: 1px dashed #c99a3d;
+    color: #8a5a2b;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-bottom: 10px;
+    display: none;
+  }
+  .buyin-warning.show { display: block; }
+
+  .player-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 1180px) {
+    .player-list { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 860px) {
+    .player-list { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 520px) {
+    .player-list { grid-template-columns: 1fr; }
+  }
+  .player-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 8px;
+    background: #fffaf0;
+    border: 1.5px solid #efe3cf;
+    border-radius: 12px;
+    transition: background .15s;
+    min-width: 0;
+  }
+  .player-row:hover { background: #fff4d6; }
+  .player-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #231f20;
+    color: #fff8ee;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .player-avatar.c0 { background: #d9344a; }
+  .player-avatar.c1 { background: #4a7cff; }
+  .player-avatar.c2 { background: #2fa355; }
+  .player-avatar.c3 { background: #c99a3d; }
+  .player-avatar.c4 { background: #7c4a99; }
+  .player-avatar.c5 { background: #e07b00; }
+  .player-avatar.c6 { background: #1a9a9a; }
+
+  .player-name {
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .player-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 10px;
+    color: #8a5a2b;
+    line-height: 1.15;
+    margin-right: 1px;
+    flex-shrink: 0;
+  }
+  .player-info .count {
+    font-size: 12px;
+    font-weight: 800;
+    color: #231f20;
+    letter-spacing: 0;
+  }
+  .player-info .amount {
+    font-size: 9px;
+    opacity: .75;
+  }
+  .pips {
+    display: none;  /* 两列布局下隐藏筹码点，用「n 手」文字即可 */
+  }
+  .pip {
+    width: 10px;
+    height: 14px;
+    border-radius: 2px;
+    background: #e8d5b0;
+    border: 1px solid #c99a3d;
+  }
+  .pip.filled { background: #d9344a; border-color: #c0392b; }
+  .add-btn {
+    background: #231f20;
+    color: #fff8ee;
+    border: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .1s, background .15s;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .add-btn:hover:not(:disabled) { background: #d9344a; transform: scale(1.05); }
+  .add-btn:active:not(:disabled) { transform: scale(.95); }
+  .add-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+  .out-btn {
+    background: #fff;
+    color: #231f20;
+    border: 1.5px solid #231f20;
+    border-radius: 7px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .out-btn:hover { background: #231f20; color: #fff; }
+  .out-btn.revive {
+    background: #35c759;
+    color: #fff;
+    border-color: #2a9c48;
+  }
+  .out-btn.revive:hover { background: #2a9c48; }
+
+  /* 出局样式 */
+  .player-row.out {
+    background: #f3f1ec;
+    border-color: #d9d4c7;
+  }
+  .player-row.out:hover { background: #ebe8e0; }
+  .player-row.out .player-avatar { background: #4a4a4a !important; color: #d9d4c7; }
+  .player-row.out .player-name {
+    color: #4a4a4a;
+    text-decoration: line-through;
+    text-decoration-color: rgba(74,74,74,.5);
+  }
+  .player-row.out .player-info .count,
+  .player-row.out .player-info .amount { color: #4a4a4a; opacity: .75; }
+  .player-row.out .pip.filled { background: #6a6a6a; border-color: #4a4a4a; }
+  .player-row.out .pip { background: #d9d4c7; border-color: #b8b1a0; }
+
+  .out-tag {
+    display: inline-block;
+    background: #231f20;
+    color: #fff8ee;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: 2px;
+  }
+
+  .remove-btn {
+    background: transparent;
+    color: #a28a66;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 6px;
+    opacity: .5;
+    transition: opacity .15s, color .15s;
+    flex-shrink: 0;
+  }
+  .remove-btn:hover { opacity: 1; color: #d9344a; }
+
+  .empty-state {
+    text-align: center;
+    padding: 24px 12px;
+    color: #a28a66;
+    font-size: 13px;
+    background: #fffaf0;
+    border: 1.5px dashed #d7b48a;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+
+  .add-player {
+    display: flex;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1.5px dashed #d7b48a;
+  }
+  .add-player input {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1.5px solid #d7b48a;
+    border-radius: 10px;
+    background: #fffaf0;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .add-player input:focus { border-color: #d9344a; }
+  .add-player button {
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    background: #d9344a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+  .add-player button:hover { background: #c0392b; }
+
+  /* 奖金池面板 */
+  .pool-panel {
+    background: linear-gradient(135deg, #fff4c2 0%, #ffe08a 60%, #ffcf5c 100%);
+    border-color: #c99a3d;
+    box-shadow: 4px 4px 0 #c99a3d;
+    padding: 14px 18px;
+  }
+  .pool-row {
+    display: grid;
+    grid-template-columns: 1.3fr 10px 1fr 1fr 1fr;
+    align-items: center;
+    gap: 10px;
+  }
+  .pool-cell { padding: 0 2px; min-width: 0; }
+  .pool-cell-title {
+    font-size: 12px;
+    color: #5c3a0f;
+    letter-spacing: 1px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pool-pct-inline {
+    font-size: 10px;
+    color: #8a5a2b;
+    opacity: .75;
+    font-weight: 400;
+    margin-left: 2px;
+  }
+  .pool-cell-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: #231f20;
+    letter-spacing: 1px;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pool-cell-main .pool-cell-title { color: #5c3a0f; font-size: 13px; letter-spacing: 2px; }
+  .pool-cell-main .pool-cell-value {
+    color: #c0392b;
+    font-size: 34px;
+    text-shadow: 2px 2px 0 rgba(255,255,255,.6);
+  }
+  .pool-divider {
+    width: 2px;
+    height: 46px;
+    background: rgba(92, 58, 15, .25);
+    border-radius: 2px;
+    justify-self: center;
+  }
+  .pool-hint {
+    display: none;
+  }
+
+  @media (max-width: 1100px) {
+    .pool-row { grid-template-columns: 1fr 1fr; row-gap: 10px; }
+    .pool-divider { display: none; }
+    .pool-cell-main { grid-column: 1 / -1; }
+    .pool-cell-main .pool-cell-value { font-size: 28px; }
+  }
+
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: 1fr; }
+    .countdown { font-size: 72px; }
+    .side-value { font-size: 56px; }
+    .next-hint { font-size: 15px; }
+    h1.title { font-size: 22px; }
+    .timer-core { grid-template-columns: 1fr 1.4fr 1fr; gap: 14px; padding: 10px 2px; }
+  }
+  @media (max-width: 640px) {
+    .timer-core { grid-template-columns: 1fr; gap: 10px; text-align: center; }
+    .countdown { font-size: 56px; }
+    .side-value { font-size: 40px; }
+    .next-hint { font-size: 13px; }
+    .poster-head { justify-content: center; }
+  }
+
+  /* ========== 配置面板 ========== */
+  .config-fab {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 50;
+    width: auto;
+    min-width: 86px;
+    height: 42px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 2px solid #231f20;
+    background: #fff;
+    color: #231f20;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 #231f20;
+    transition: transform .15s, background .15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .config-fab:hover { background: #ffd1a8; transform: translateY(-1px); }
+  .config-fab:active { transform: translateY(1px); }
+
+  .modal-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 20, 15, .55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 100;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+  }
+  .modal-mask.show { display: flex; }
+  .modal-card {
+    background: #fff8ee;
+    border: 2px solid #231f20;
+    border-radius: 20px;
+    box-shadow: 6px 6px 0 #d9344a;
+    width: 100%;
+    max-width: 760px;
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-head {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #231f20;
+    color: #fff8ee;
+  }
+  .modal-head h2 { margin: 0; font-size: 18px; letter-spacing: 2px; }
+  .modal-close {
+    background: transparent;
+    color: #fff8ee;
+    border: 1px solid rgba(255,255,255,.3);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  .modal-close:hover { background: rgba(255,255,255,.1); }
+  .modal-body {
+    padding: 18px 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .modal-foot {
+    padding: 12px 20px;
+    border-top: 1.5px solid #efe3cf;
+    background: #fffdf6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .modal-foot .foot-right { display: flex; gap: 10px; }
+
+  .cfg-section { margin-bottom: 18px; }
+  .cfg-section:last-child { margin-bottom: 0; }
+  .cfg-section-title {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    padding: 4px 10px;
+    background: #fff2c2;
+    border-radius: 6px;
+    display: inline-block;
+    letter-spacing: 1px;
+  }
+  .cfg-section-title .cfg-sub {
+    font-weight: 400;
+    font-size: 12px;
+    color: #8a5a2b;
+    margin-left: 6px;
+    letter-spacing: 0;
+  }
+  .cfg-grid { display: grid; gap: 10px; }
+  .cfg-grid.cfg-basic { grid-template-columns: repeat(2, 1fr); }
+  .cfg-grid.cfg-buyin { grid-template-columns: repeat(2, 1fr); }
+  .cfg-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #7a5230;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .cfg-grid input {
+    padding: 8px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    border: 1.5px solid #d7b48a;
+    border-radius: 8px;
+    background: #fffdf6;
+    outline: none;
+    color: #231f20;
+    transition: border-color .15s;
+  }
+  .cfg-grid input:focus { border-color: #d9344a; }
+
+  /* 盲注结构表 */
+  .cfg-levels-head,
+  .cfg-level-row {
+    display: grid;
+    grid-template-columns: 56px 1fr 1fr 1fr 1fr 40px;
+    gap: 6px;
+    align-items: center;
+  }
+  .cfg-levels-head {
+    font-size: 11px;
+    color: #8a5a2b;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 6px 2px;
+    border-bottom: 1.5px solid #d7b48a;
+    margin-bottom: 6px;
+  }
+  .cfg-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .cfg-level-row {
+    padding: 4px 2px;
+    border-radius: 8px;
+    transition: background .15s;
+  }
+  .cfg-level-row:hover { background: #fff2c2; }
+  .cfg-level-row.final { background: #ffd9df; }
+  .cfg-level-row.final:hover { background: #ffc5cf; }
+  .cfg-level-row .lvl-label {
+    font-weight: 800;
+    text-align: center;
+    font-size: 13px;
+    color: #231f20;
+  }
+  .cfg-level-row.final .lvl-label { color: #c0392b; }
+  .cfg-level-row input {
+    width: 100%;
+    padding: 5px 6px;
+    font-size: 13px;
+    text-align: center;
+    border: 1.5px solid #d7b48a;
+    border-radius: 6px;
+    background: #fff;
+    outline: none;
+    font-family: inherit;
+    color: #231f20;
+    min-width: 0;
+  }
+  .cfg-level-row input:focus { border-color: #d9344a; }
+  .cfg-level-row input.chip-blank { background: #efe3cf; color: #8a5a2b; }
+  .cfg-level-row .del-level {
+    background: transparent;
+    color: #a28a66;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color .15s, background .15s;
+  }
+  .cfg-level-row .del-level:hover { color: #d9344a; background: #ffd9df; }
+  .cfg-levels-tools {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .cfg-tip {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6a4a2a;
+    background: #fff8e0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border-left: 3px solid #c99a3d;
+    line-height: 1.5;
+  }
+
+  .btn-ghost {
+    background: #fff;
+    border: 1.5px solid #231f20;
+    color: #231f20;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 1px;
+    transition: background .15s;
+  }
+  .btn-ghost:hover { background: #ffd1a8; }
+  .btn-primary {
+    background: #d9344a;
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 2px;
+    transition: background .15s;
+  }
+  .btn-primary:hover { background: #c0392b; }
+
+  @media (max-width: 640px) {
+    .cfg-grid.cfg-basic,
+    .cfg-grid.cfg-buyin { grid-template-columns: 1fr; }
+    .cfg-levels-head,
+    .cfg-level-row { grid-template-columns: 44px 1fr 1fr 1fr 1fr 32px; font-size: 11px; }
+    .cfg-level-row input { padding: 4px 2px; font-size: 12px; }
+    .config-fab { top: 10px; right: 12px; height: 36px; padding: 0 12px; font-size: 12px; min-width: 72px; }
+  }
+
+  /* 结束比赛弹窗 */
+  .end-info {
+    background: #fffaf0;
+    border: 1.5px dashed #d7b48a;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #7a5230;
+    line-height: 1.6;
+    text-align: center;
+  }
+  .end-info b { color: #d9344a; font-size: 15px; font-family: "SF Mono", "Menlo", "Consolas", monospace; }
+  .end-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  @media (max-width: 640px) {
+    .end-grid { grid-template-columns: 1fr; }
+  }
+  .end-col h3 {
+    font-size: 13px;
+    letter-spacing: 1px;
+    margin: 0 0 6px;
+    text-align: center;
+    padding: 4px;
+    border-radius: 6px;
+  }
+  .end-col.gold h3 { background: linear-gradient(180deg, #fff4c2, #ffe08a); color: #5c3a0f; }
+  .end-col.silver h3 { background: linear-gradient(180deg, #f0f0f0, #d9d9d9); color: #333; }
+  .end-col.bronze h3 { background: linear-gradient(180deg, #ffe0c2, #ffcc99); color: #6a3c0a; }
+  .end-col select {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1.5px solid #d7b48a;
+    border-radius: 8px;
+    background: #fff;
+    font-family: inherit;
+    outline: none;
+    font-weight: 700;
+    color: #231f20;
+  }
+  .end-col select:focus { border-color: #d9344a; }
+  .end-col .prize-hint {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #d9344a;
+    font-weight: 900;
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- 右上角：返回主页 -->
+<button id="btn-back" class="config-fab" title="取消比赛，返回主页">← 返回</button>
+
+<!-- 结束比赛弹窗 -->
+<div class="modal-mask" id="end-modal">
+  <div class="modal-card" style="max-width: 640px;">
+    <div class="modal-head">
+      <h2>🏁 结束比赛 · 指定冠亚季军</h2>
+    </div>
+    <div class="modal-body">
+      <div class="end-info" id="end-info-text">—</div>
+      <div class="end-grid">
+        <div class="end-col gold">
+          <h3>🥇 冠军</h3>
+          <select id="sel-gold"></select>
+          <div class="prize-hint" id="end-prize-gold">—</div>
+        </div>
+        <div class="end-col silver">
+          <h3>🥈 亚军</h3>
+          <select id="sel-silver"></select>
+          <div class="prize-hint" id="end-prize-silver">—</div>
+        </div>
+        <div class="end-col bronze">
+          <h3>🥉 季军</h3>
+          <select id="sel-bronze"></select>
+          <div class="prize-hint" id="end-prize-bronze">—</div>
+        </div>
+      </div>
+      <div class="cfg-tip" style="margin-top: 14px;">
+        💡 保存后将写入「历史牌局」，并自动更新各选手的积分（冠军 +3 / 亚军 +2 / 季军 +1）。
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span style="font-size: 12px; color: #8a5a2b;">保存后将返回主页</span>
+      <div class="foot-right">
+        <button class="btn-ghost" id="end-cancel">取消</button>
+        <button class="btn-primary" id="end-save">保存并返回主页 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 配置弹窗 -->
+<div class="modal-mask" id="config-modal">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2>⚙ 比赛配置</h2>
+      <button class="modal-close" id="btn-config-close" title="关闭">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- 基本信息 -->
+      <section class="cfg-section">
+        <div class="cfg-section-title">① 基本信息</div>
+        <div class="cfg-grid cfg-basic">
+          <label>标题
+            <input type="text" id="cfg-title" maxlength="24" placeholder="德州酒局">
+          </label>
+          <label>日期
+            <input type="date" id="cfg-date">
+          </label>
+          <label>时间
+            <input type="time" id="cfg-time">
+          </label>
+          <label>地点
+            <input type="text" id="cfg-location" maxlength="30" placeholder="姜乐子家">
+          </label>
+        </div>
+      </section>
+
+      <!-- 买入规则 -->
+      <section class="cfg-section">
+        <div class="cfg-section-title">② 买入规则</div>
+        <div class="cfg-grid cfg-buyin">
+          <label>每手买入 (¥)
+            <input type="number" id="cfg-buyin-price" min="1" step="1">
+          </label>
+          <label>买入上限 (手)
+            <input type="number" id="cfg-buyin-max" min="1" max="20" step="1">
+          </label>
+        </div>
+      </section>
+
+      <!-- 盲注结构 -->
+      <section class="cfg-section">
+        <div class="cfg-section-title">
+          ③ 盲注结构
+          <span class="cfg-sub">共 <span id="cfg-levels-count">0</span> 级 · 决赛圈 L6 之后不可买入</span>
+        </div>
+
+        <div class="cfg-levels-head">
+          <div>级别</div>
+          <div>小盲</div>
+          <div>大盲</div>
+          <div>时长(分)</div>
+          <div>每手码量</div>
+          <div>操作</div>
+        </div>
+        <div class="cfg-levels" id="cfg-levels"></div>
+        <div class="cfg-levels-tools">
+          <button type="button" class="btn-ghost" id="btn-add-level">+ 新增一级</button>
+          <button type="button" class="btn-ghost" id="btn-reset-levels">↺ 恢复默认 11 级</button>
+        </div>
+        <div class="cfg-tip">💡「每手码量」为空表示该级起停止买入（决赛圈）。可随意增减级别数量。</div>
+      </section>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn-ghost" id="btn-config-reset">⟲ 全部恢复默认</button>
+      <div class="foot-right">
+        <button class="btn-ghost" id="btn-config-cancel">取消</button>
+        <button class="btn-primary" id="btn-config-save">保存并应用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ===================== 左侧海报 ===================== -->
+  <aside class="poster">
+    <span class="corner tl">♠</span>
+    <span class="corner tr">♥</span>
+    <span class="corner bl">♦</span>
+    <span class="corner br">♣</span>
+
+    <div class="poster-head">
+      <h1 class="title" id="meta-title">德州酒局</h1>
+      <div class="meta-chips">
+        <span class="chip">🗓️ <span id="meta-date">2026 / 10 / 23</span></span>
+        <span class="chip">⏰ <span id="meta-time">19 : 30</span></span>
+        <span class="chip red">📍 <span id="meta-location">姜乐子家</span></span>
+      </div>
+    </div>
+
+    <div class="side-grid">
+      <div class="section">
+        <div class="section-title">💰 买入规则</div>
+        <ul class="buyin-list" id="buyin-rules">
+          <!-- JS 渲染 -->
+        </ul>
+      </div>
+
+      <div class="section gold">
+        <div class="section-title">🏆 奖金分配</div>
+        <div class="prizes">
+          <div class="prize gold">
+            <div class="medal">🥇</div>
+            <div class="rank">冠&nbsp;军</div>
+            <div class="pct">50%</div>
+            <div class="amount" id="prize-1">—</div>
+          </div>
+          <div class="prize silver">
+            <div class="medal">🥈</div>
+            <div class="rank">亚&nbsp;军</div>
+            <div class="pct">33.3%</div>
+            <div class="amount" id="prize-2">—</div>
+          </div>
+          <div class="prize bronze">
+            <div class="medal">🥉</div>
+            <div class="rank">季&nbsp;军</div>
+            <div class="pct">16.7%</div>
+            <div class="amount" id="prize-3">—</div>
+          </div>
+        </div>
+        <div class="note">🎯 L11 结束后仍未决出冠军，按剩余码量排名。</div>
+      </div>
+    </div>
+
+    <div class="section red">
+      <div class="section-title">♠️ 盲注结构（当前级别高亮）</div>
+      <table class="levels" aria-label="盲注表">
+        <thead>
+          <tr>
+            <th>级别</th>
+            <th>小盲</th>
+            <th>大盲</th>
+            <th>时长</th>
+            <th>码量</th>
+          </tr>
+        </thead>
+        <tbody id="levels-tbody">
+          <!-- JS 渲染 -->
+        </tbody>
+      </table>
+      <div class="note" id="blinds-note">💡 每手买入统一 ¥200，级别越高同样的 ¥200 换到的码量越多——越早入局越划算。</div>
+    </div>
+  </aside>
+
+  <!-- ===================== 右侧工作台 ===================== -->
+  <section class="console">
+
+    <!-- 计时器面板 -->
+    <div class="panel timer-panel">
+      <div class="timer-core">
+        <div class="timer-side timer-level">
+          <div class="side-label">当前级别</div>
+          <div class="side-value" id="level-tag">L1</div>
+          <div class="side-sub" id="level-sub">—</div>
+        </div>
+        <div class="timer-center">
+          <div class="center-label">&nbsp;</div>
+          <div class="countdown" id="countdown">15:00</div>
+          <div class="center-sub"><div class="progress-bar"><div class="fill" id="progress-fill"></div></div></div>
+        </div>
+        <div class="timer-side timer-blinds">
+          <div class="side-label">当前盲注</div>
+          <div class="side-value" id="blinds-main"><b>1</b><span class="slash">/</span><b>2</b></div>
+          <div class="side-sub" id="blinds-sub">码量 200</div>
+        </div>
+      </div>
+
+      <div class="next-hint" id="next-hint">下一级 L2 · 盲 2 / 4 · 15′</div>
+
+      <div class="controls">
+        <button class="ctrl-btn start" id="btn-start">开始</button>
+        <button class="ctrl-btn next" id="btn-skip">跳到下一级</button>
+        <button class="ctrl-btn end" id="btn-end">结束比赛</button>
+        <div class="level-nav">
+          <button class="nav-btn" id="prev-level" title="上一级">←</button>
+          <button class="nav-btn" id="next-level" title="下一级">→</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 奖金池 -->
+    <div class="panel pool-panel">
+      <div class="pool-row">
+        <div class="pool-cell pool-cell-main">
+          <div class="pool-cell-title">当前奖金池</div>
+          <div class="pool-cell-value" id="pool-total">¥0</div>
+        </div>
+        <div class="pool-divider"></div>
+        <div class="pool-cell pool-cell-gold">
+          <div class="pool-cell-title">🥇 冠军 <span class="pool-pct-inline">50%</span></div>
+          <div class="pool-cell-value" id="pool-1">¥0</div>
+        </div>
+        <div class="pool-cell pool-cell-silver">
+          <div class="pool-cell-title">🥈 亚军 <span class="pool-pct-inline">33.3%</span></div>
+          <div class="pool-cell-value" id="pool-2">¥0</div>
+        </div>
+        <div class="pool-cell pool-cell-bronze">
+          <div class="pool-cell-title">🥉 季军 <span class="pool-pct-inline">16.7%</span></div>
+          <div class="pool-cell-value" id="pool-3">¥0</div>
+        </div>
+      </div>
+      <div class="pool-hint" id="pool-hint">奖池 = 全场买入之和，玩家买入时实时更新</div>
+    </div>
+
+    <!-- 玩家面板 -->
+    <div class="panel">
+      <div class="players-head">
+        <h2>👥 玩家 & 买入</h2>
+        <div class="buyin-stats">
+          <span class="stat-chip" id="stat-players">0 人</span>
+          <span class="stat-chip" id="stat-alive">存活 0</span>
+          <span class="stat-chip red" id="stat-buyins">0 手</span>
+          <span class="stat-chip green" id="stat-money">¥0</span>
+        </div>
+      </div>
+      <div class="buyin-warning" id="buyin-warning">⚠️ 已进入决赛圈（L6+），不可再买入。</div>
+      <div class="player-list" id="player-list"></div>
+      <div class="empty-state" id="empty-state">还没有玩家，先在下方添加吧 ♠</div>
+      <div class="add-player">
+        <input type="text" id="new-player-name" placeholder="输入玩家昵称，回车即可添加" maxlength="20">
+        <button id="btn-add-player">+ 添加</button>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<script>
+  // ---------- 默认配置 ----------
+  const DEFAULT_CONFIG = {
+    title: '德州酒局',
+    date: '2026-10-23',
+    time: '19:30',
+    location: '姜乐子家',
+    buyinPrice: 200,
+    maxHands: 4,
+    finalIndex: 5,  // 第几级起算决赛圈（0-based），固定在 L6
+    levels: [
+      { sb: 1,   bb: 2,   mins: 15, chips: 200  },
+      { sb: 2,   bb: 4,   mins: 15, chips: 200  },
+      { sb: 3,   bb: 6,   mins: 10, chips: 300  },
+      { sb: 4,   bb: 8,   mins: 10, chips: 400  },
+      { sb: 5,   bb: 10,  mins: 10, chips: 500  },
+      { sb: 6,   bb: 12,  mins: 10, chips: null },
+      { sb: 8,   bb: 16,  mins: 10, chips: null },
+      { sb: 10,  bb: 20,  mins: 10, chips: null },
+      { sb: 15,  bb: 20,  mins: 10, chips: null },
+      { sb: 30,  bb: 60,  mins: 10, chips: null },
+      { sb: 100, bb: 200, mins: 10, chips: null },
+    ],
+  };
+  const CFG_STORAGE_KEY = 'poker-dashboard.config.v1';
+  const LS_PENDING = 'poker.pendingMatch.v1';
+  const LS_PLAYERS = 'poker.players.v1';
+  const LS_MATCHES = 'poker.matches.v1';
+
+  function readLS(key, fallback) {
+    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; }
+    catch (e) { return fallback; }
+  }
+  function writeLS(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+
+  // 若是从新建牌局进来的，优先用 pending 中的配置
+  const pendingMatch = readLS(LS_PENDING, null);
+
+  // 把配置里的 levels 展开成运行时用的 LEVELS 列表（lvl 名称 / final 标志 由索引推导）
+  function expandLevels(cfg) {
+    return cfg.levels.map((L, i) => ({
+      lvl: 'L' + (i + 1),
+      sb: L.sb, bb: L.bb, mins: L.mins,
+      chips: (L.chips == null || L.chips === '') ? null : Number(L.chips),
+      final: i >= cfg.finalIndex,
+    }));
+  }
+
+  // 加载/保存配置
+  function loadConfig() {
+    try {
+      // 1) 若有正在进行的 pending 牌局，优先用它的 config
+      if (pendingMatch && pendingMatch.config) {
+        return Object.assign(deepClone(DEFAULT_CONFIG), pendingMatch.config);
+      }
+      const raw = localStorage.getItem(CFG_STORAGE_KEY);
+      if (!raw) return deepClone(DEFAULT_CONFIG);
+      const parsed = JSON.parse(raw);
+      return Object.assign(deepClone(DEFAULT_CONFIG), parsed, {
+        levels: Array.isArray(parsed.levels) && parsed.levels.length ? parsed.levels : DEFAULT_CONFIG.levels,
+      });
+    } catch (e) {
+      return deepClone(DEFAULT_CONFIG);
+    }
+  }
+  function saveConfig(cfg) {
+    try { localStorage.setItem(CFG_STORAGE_KEY, JSON.stringify(cfg)); } catch (e) {}
+  }
+  function deepClone(x) { return JSON.parse(JSON.stringify(x)); }
+
+  // 格式化日期/时间显示
+  function fmtDate(d) {
+    if (!d) return '';
+    const [y, m, day] = d.split('-');
+    return `${y} / ${m} / ${day}`;
+  }
+  function fmtTime(t) {
+    if (!t) return '';
+    const [h, m] = t.split(':');
+    return `${h} : ${m}`;
+  }
+
+  // ---------- 赛制配置（运行时） ----------
+  let config = loadConfig();
+  let LEVELS = expandLevels(config);
+  let BUYIN_PRICE = config.buyinPrice;
+  let MAX_HANDS = config.maxHands;
+
+  // ---------- 状态 ----------
+  const state = {
+    currentIdx: 0,
+    remaining: LEVELS[0].mins * 60,  // 秒
+    running: false,
+    ended: false,
+    tickHandle: null,
+    players: [],  // {id, name, hands, out}
+  };
+
+  // 如果从新建牌局进来，预填 pending 的选手列表（每人默认已买入 1 手）
+  if (pendingMatch && Array.isArray(pendingMatch.playerIds)) {
+    const roster = readLS(LS_PLAYERS, []);
+    const map = Object.fromEntries(roster.map(p => [p.id, p]));
+    state.players = pendingMatch.playerIds
+      .map(pid => map[pid])
+      .filter(Boolean)
+      .map(p => ({ id: p.id, name: p.name, hands: 1, out: false }));
+  }
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const levelTag = $('level-tag');
+  const countdownEl = $('countdown');
+  const progressFill = $('progress-fill');
+  const btnStart = $('btn-start');
+  const btnEnd = $('btn-end');
+  const btnSkip = $('btn-skip');
+  const btnPrev = $('prev-level');
+  const btnNext = $('next-level');
+  const nextHint = $('next-hint');
+  const levelsTbody = $('levels-tbody');
+  const playerList = $('player-list');
+  const emptyState = $('empty-state');
+  const nameInput = $('new-player-name');
+  const btnAddPlayer = $('btn-add-player');
+  const statPlayers = $('stat-players');
+  const statBuyins = $('stat-buyins');
+  const statMoney = $('stat-money');
+  const buyinWarning = $('buyin-warning');
+
+  // ---------- 元信息 & 买入规则（可配置部分） ----------
+  function renderMeta() {
+    $('meta-title').textContent = config.title || '德州酒局';
+    document.title = (config.title || '德州酒局') + ' · 工作台';
+    $('meta-date').textContent = fmtDate(config.date);
+    $('meta-time').textContent = fmtTime(config.time);
+    $('meta-location').textContent = config.location || '';
+
+    // 买入规则 4 条
+    const price = BUYIN_PRICE;
+    const max = MAX_HANDS;
+    const cap = price * max;
+    const finalLvl = 'L' + (config.finalIndex + 1);
+    const rules = [
+      `每手买入恒为 <b>¥${price}</b>，不随级别上涨`,
+      `每人最多 <b>买入 ${max} 手</b>（即 ¥${cap} 封顶）`,
+      `随级别上升，<b>每手兑换的码量</b>会变多`,
+      `进入 <b>决赛圈 ${finalLvl} 后不可再买入</b>`,
+    ];
+    $('buyin-rules').innerHTML = rules.map((r, i) =>
+      `<li><span class="num">${i+1}</span><span>${r}</span></li>`
+    ).join('');
+
+    // 盲注表下的提示
+    $('blinds-note').innerHTML = `💡 每手买入统一 ¥${price}，级别越高同样的 ¥${price} 换到的码量越多——越早入局越划算。`;
+
+    // 奖池提示
+    $('pool-hint').textContent = `奖池 = 全场买入之和（每手 ¥${price}），玩家买入时实时更新`;
+  }
+
+  // ---------- 盲注表 ----------
+  function renderLevelsTable() {
+    levelsTbody.innerHTML = LEVELS.map((L, i) => {
+      const classes = [];
+      if (i === config.finalIndex) classes.push('final');
+      if (i === state.currentIdx) classes.push('current');
+      const cls = classes.length ? ` class="${classes.join(' ')}"` : '';
+      const badge = (i === config.finalIndex) ? '<span class="final-badge">决赛</span>' : '';
+      const chipText = L.chips == null
+        ? '<span class="no-buyin">不可买入</span>'
+        : L.chips;
+      return `<tr${cls}>
+        <td class="lvl">${L.lvl}${badge}</td>
+        <td>${L.sb}</td>
+        <td>${L.bb}</td>
+        <td>${L.mins}′</td>
+        <td>${chipText}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ---------- 计时 & 级别展示 ----------
+  function fmt(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  function renderTimer() {
+    const L = LEVELS[state.currentIdx];
+    const isFinal = state.currentIdx >= config.finalIndex;
+    levelTag.textContent = L.lvl + (isFinal ? ' · 决赛圈' : '');
+    levelTag.classList.toggle('final', isFinal);
+
+    const chipText = L.chips == null ? '—' : L.chips;
+    $('level-sub').textContent = `${L.mins} 分钟`;
+    $('blinds-main').innerHTML = `<b>${L.sb}</b><span class="slash">/</span><b>${L.bb}</b>`;
+    $('blinds-sub').textContent = `码量 ${chipText}`;
+
+    countdownEl.textContent = fmt(state.remaining);
+
+    const total = L.mins * 60;
+    const pct = Math.max(0, Math.min(100, (state.remaining / total) * 100));
+    progressFill.style.width = pct + '%';
+
+    countdownEl.classList.remove('warn', 'danger');
+    if (state.remaining <= 10) countdownEl.classList.add('danger');
+    else if (state.remaining <= 60) countdownEl.classList.add('warn');
+
+    const nxt = LEVELS[state.currentIdx + 1];
+    if (nxt) {
+      const nxtChip = nxt.chips == null ? '停止买入' : `码量 ${nxt.chips}`;
+      nextHint.innerHTML = `↓ 下一级 <span class="nxt-key">${nxt.lvl}</span> · 盲 <span class="nxt-key">${nxt.sb}/${nxt.bb}</span> · <span class="nxt-key">${nxt.mins}′</span> · ${nxtChip}`;
+      nextHint.style.visibility = 'visible';
+    } else {
+      nextHint.textContent = '🏁 已到最后一级，结束后按剩余码量排名';
+      nextHint.style.visibility = 'visible';
+    }
+
+    btnPrev.disabled = state.currentIdx === 0;
+    btnNext.disabled = state.currentIdx === LEVELS.length - 1;
+
+    renderBuyinWarning();
+    renderLevelsTable();
+    updateControlsUI();
+  }
+
+  function updateControlsUI() {
+    if (state.ended) {
+      btnStart.textContent = '已结束';
+      btnStart.className = 'ctrl-btn start';
+      btnStart.disabled = true;
+      btnEnd.disabled = true;
+      btnSkip.disabled = true;
+      return;
+    }
+    btnEnd.disabled = false;
+    btnSkip.disabled = state.currentIdx === LEVELS.length - 1;
+    if (state.running) {
+      btnStart.textContent = '暂停';
+      btnStart.className = 'ctrl-btn pause';
+    } else {
+      // 剩余时间 < 本级别满 时表示曾经启动过
+      const L = LEVELS[state.currentIdx];
+      const started = state.remaining !== L.mins * 60;
+      btnStart.textContent = started ? '继续' : '开始';
+      btnStart.className = started ? 'ctrl-btn resume' : 'ctrl-btn start';
+    }
+  }
+
+  function tick() {
+    if (!state.running) return;
+    state.remaining -= 1;
+    if (state.remaining <= 0) {
+      state.remaining = 0;
+      renderTimer();
+      // 到下一级
+      if (state.currentIdx < LEVELS.length - 1) {
+        state.currentIdx += 1;
+        state.remaining = LEVELS[state.currentIdx].mins * 60;
+        // 继续自动运行
+        renderTimer();
+        playBeep();
+      } else {
+        // 最后一级结束
+        state.running = false;
+        clearInterval(state.tickHandle);
+        state.tickHandle = null;
+        state.ended = true;
+        renderTimer();
+        playBeep();
+      }
+      return;
+    }
+    renderTimer();
+  }
+
+  function startTimer() {
+    if (state.ended) return;
+    if (!state.running) {
+      state.running = true;
+      state.tickHandle = setInterval(tick, 1000);
+    } else {
+      state.running = false;
+      clearInterval(state.tickHandle);
+      state.tickHandle = null;
+    }
+    renderTimer();
+  }
+
+  function endMatch() {
+    if (state.ended) return;
+    // 暂停计时
+    const wasRunning = state.running;
+    if (state.running) {
+      state.running = false;
+      clearInterval(state.tickHandle);
+      state.tickHandle = null;
+      renderTimer();
+    }
+    openEndModal(wasRunning);
+  }
+
+  // ---------- 结束比赛弹窗（选冠亚季） ----------
+  function openEndModal(wasRunning) {
+    const modal = $('end-modal');
+    const totalMoney = state.players.reduce((s, p) => s + p.hands, 0) * BUYIN_PRICE;
+    const p1 = Math.round(totalMoney * 0.5);
+    const p2 = Math.round(totalMoney * 0.333);
+    const p3 = Math.max(0, totalMoney - p1 - p2);
+    $('end-info-text').innerHTML =
+      `总奖池 <b>¥${totalMoney}</b> · 共 <b>${state.players.length}</b> 人 · 累计买入 <b>${state.players.reduce((s,p)=>s+p.hands,0)}</b> 手`;
+    $('end-prize-gold').textContent = `¥${p1}`;
+    $('end-prize-silver').textContent = `¥${p2}`;
+    $('end-prize-bronze').textContent = `¥${p3}`;
+
+    const buildOpts = (exclude) => state.players
+      .map(p => `<option value="${p.id}" ${exclude.includes(p.id) ? 'disabled' : ''}>${escapeHtml(p.name)}${p.out ? '（已出局）' : ''}</option>`)
+      .join('');
+    const refreshOpts = () => {
+      const g = $('sel-gold').value, s = $('sel-silver').value, b = $('sel-bronze').value;
+      $('sel-gold').innerHTML = '<option value="">— 请选择 —</option>' + buildOpts([s, b].filter(Boolean));
+      $('sel-silver').innerHTML = '<option value="">— 请选择 —</option>' + buildOpts([g, b].filter(Boolean));
+      $('sel-bronze').innerHTML = '<option value="">— 请选择 —</option>' + buildOpts([g, s].filter(Boolean));
+      $('sel-gold').value = g; $('sel-silver').value = s; $('sel-bronze').value = b;
+    };
+    $('sel-gold').innerHTML = '<option value="">— 请选择 —</option>' + buildOpts([]);
+    $('sel-silver').innerHTML = '<option value="">— 请选择 —</option>' + buildOpts([]);
+    $('sel-bronze').innerHTML = '<option value="">— 请选择 —</option>' + buildOpts([]);
+    $('sel-gold').onchange = $('sel-silver').onchange = $('sel-bronze').onchange = refreshOpts;
+
+    $('end-cancel').onclick = () => {
+      modal.classList.remove('show');
+      if (wasRunning) {
+        state.running = true;
+        state.tickHandle = setInterval(tick, 1000);
+        renderTimer();
+      }
+    };
+    $('end-save').onclick = () => {
+      const g = $('sel-gold').value, s = $('sel-silver').value, b = $('sel-bronze').value;
+      if (!g || !s || !b) { alert('请选出完整的冠亚季军'); return; }
+      if (new Set([g, s, b]).size !== 3) { alert('三位必须不同'); return; }
+      saveMatchAndExit({ gold: g, silver: s, bronze: b }, { gold: p1, silver: p2, bronze: p3 }, totalMoney);
+    };
+
+    modal.classList.add('show');
+  }
+
+  function saveMatchAndExit(rank, prizes, pool) {
+    const matches = readLS(LS_MATCHES, []);
+    const pending = pendingMatch || {};
+    const buyins = {};
+    for (const p of state.players) buyins[p.id] = p.hands * BUYIN_PRICE;
+    const match = {
+      id: pending.id || ('m_' + Math.random().toString(36).slice(2, 10)),
+      no: pending.no || (matches.reduce((max, m) => Math.max(max, m.no || 0), 0) + 1),
+      config: config,
+      playerIds: state.players.map(p => p.id),
+      buyins,
+      pool,
+      rank,
+      prizes,
+      playedAt: new Date().toISOString(),
+    };
+    matches.push(match);
+    writeLS(LS_MATCHES, matches);
+    try { localStorage.removeItem(LS_PENDING); } catch (e) {}
+    state.ended = true;
+    alert(`✅ 比赛已保存\n\n🥇 ${nameOf(rank.gold)}  ¥${prizes.gold}\n🥈 ${nameOf(rank.silver)}  ¥${prizes.silver}\n🥉 ${nameOf(rank.bronze)}  ¥${prizes.bronze}`);
+    location.href = 'index.html';
+  }
+  function nameOf(id) {
+    const p = state.players.find(x => x.id === id);
+    return p ? p.name : '—';
+  }
+
+  function gotoLevel(idx, autoRun) {
+    idx = Math.max(0, Math.min(LEVELS.length - 1, idx));
+    state.currentIdx = idx;
+    state.remaining = LEVELS[idx].mins * 60;
+    if (autoRun === false && state.running) {
+      state.running = false;
+      clearInterval(state.tickHandle);
+      state.tickHandle = null;
+    }
+    renderTimer();
+  }
+
+  function skipNext() {
+    if (state.currentIdx >= LEVELS.length - 1) return;
+    gotoLevel(state.currentIdx + 1, true);
+  }
+
+  function playBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 880;
+      g.gain.value = 0.15;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      setTimeout(() => { o.stop(); ctx.close(); }, 400);
+    } catch (e) {}
+  }
+
+  // ---------- 玩家 ----------
+  function uid() { return 'p_' + Math.random().toString(36).slice(2, 9); }
+
+  function addPlayer() {
+    const name = nameInput.value.trim();
+    if (!name) {
+      nameInput.focus();
+      return;
+    }
+    state.players.push({ id: uid(), name, hands: 1, out: false }); // 新增默认已买入 1 手（首次入局）
+    nameInput.value = '';
+    nameInput.focus();
+    renderPlayers();
+  }
+
+  function addHand(id) {
+    const p = state.players.find(x => x.id === id);
+    if (!p) return;
+    if (p.out) return;
+    if (p.hands >= MAX_HANDS) return;
+    if (isFinalRound()) return;
+    p.hands += 1;
+    renderPlayers();
+  }
+
+  function toggleOut(id) {
+    const p = state.players.find(x => x.id === id);
+    if (!p) return;
+    p.out = !p.out;
+    renderPlayers();
+  }
+
+  function removePlayer(id) {
+    const p = state.players.find(x => x.id === id);
+    if (!p) return;
+    if (!confirm(`确认移除玩家「${p.name}」？\n已累计买入 ${p.hands} 手。`)) return;
+    state.players = state.players.filter(x => x.id !== id);
+    renderPlayers();
+  }
+
+  function isFinalRound() {
+    return LEVELS[state.currentIdx].final;
+  }
+
+  function renderBuyinWarning() {
+    buyinWarning.classList.toggle('show', isFinalRound());
+  }
+
+  function renderPlayers() {
+    emptyState.style.display = state.players.length === 0 ? 'block' : 'none';
+    const finalLocked = isFinalRound();
+
+    // 出局的沉底，保留原加入顺序
+    const ordered = state.players
+      .map((p, i) => ({ p, i }))
+      .sort((a, b) => (a.p.out - b.p.out) || (a.i - b.i))
+      .map(x => x.p);
+
+    playerList.innerHTML = ordered.map((p, i) => {
+      const color = 'c' + (i % 7);
+      const initial = p.name.slice(0, 1).toUpperCase();
+      const pips = Array.from({ length: MAX_HANDS }, (_, k) =>
+        `<span class="pip ${k < p.hands ? 'filled' : ''}"></span>`
+      ).join('');
+      const addDisabled = p.out || p.hands >= MAX_HANDS || finalLocked;
+      let addTitle;
+      if (p.out) addTitle = '已出局，不可买入';
+      else if (finalLocked) addTitle = '决赛圈不可买入';
+      else if (p.hands >= MAX_HANDS) addTitle = '已达上限 4 手';
+      else addTitle = '再买一手 +¥200';
+      const outTag = p.out ? '<span class="out-tag">OUT</span>' : '';
+      const outBtnLabel = p.out ? '♻' : '✖';
+      const outBtnCls = p.out ? 'out-btn revive' : 'out-btn';
+      const outBtnTitle = p.out ? '误操作？点此恢复在场状态（买入金额本就计入奖池，不受影响）' : '标记该玩家被淘汰（将沉到列表底部，买入金额仍计入奖池）';
+      return `
+        <div class="player-row${p.out ? ' out' : ''}">
+          <span class="player-avatar ${color}">${escapeHtml(initial)}</span>
+          <span class="player-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}${outTag}</span>
+          <div class="pips" title="已买入 ${p.hands} / ${MAX_HANDS} 手">${pips}</div>
+          <div class="player-info">
+            <span class="count">${p.hands} 手</span>
+            <span class="amount">¥${p.hands * BUYIN_PRICE}</span>
+          </div>
+          <button class="add-btn" data-add="${p.id}" ${addDisabled ? 'disabled' : ''}
+                  title="${addTitle}">+</button>
+          <button class="${outBtnCls}" data-out="${p.id}" title="${outBtnTitle}">${outBtnLabel}</button>
+        </div>
+      `;
+    }).join('');
+
+    // 绑定按钮
+    playerList.querySelectorAll('[data-add]').forEach(btn => {
+      btn.addEventListener('click', () => addHand(btn.dataset.add));
+    });
+    playerList.querySelectorAll('[data-out]').forEach(btn => {
+      btn.addEventListener('click', () => toggleOut(btn.dataset.out));
+    });
+
+    renderStats();
+  }
+
+  function renderStats() {
+    const nPlayers = state.players.length;
+    const nAlive = state.players.filter(p => !p.out).length;
+    const totalHands = state.players.reduce((s, p) => s + p.hands, 0);
+    const totalMoney = totalHands * BUYIN_PRICE;
+    statPlayers.textContent = `${nPlayers} 人`;
+    $('stat-alive').textContent = `存活 ${nAlive}`;
+    statBuyins.textContent = `${totalHands} 手`;
+    statMoney.textContent = `¥${totalMoney}`;
+
+    // 更新奖金预览（左侧小字）
+    const p1 = Math.round(totalMoney * 0.5);
+    const p2 = Math.round(totalMoney * 0.333);
+    const p3 = Math.max(0, totalMoney - p1 - p2); // 剩下给季军，和为总额
+    $('prize-1').textContent = totalMoney ? `≈ ¥${p1}` : '—';
+    $('prize-2').textContent = totalMoney ? `≈ ¥${p2}` : '—';
+    $('prize-3').textContent = totalMoney ? `≈ ¥${p3}` : '—';
+
+    // 更新右侧奖金池
+    $('pool-total').textContent = `¥${totalMoney}`;
+    $('pool-1').textContent = `¥${p1}`;
+    $('pool-2').textContent = `¥${p2}`;
+    $('pool-3').textContent = `¥${p3}`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ---------- 事件绑定 ----------
+  btnStart.addEventListener('click', startTimer);
+  btnEnd.addEventListener('click', endMatch);
+  btnSkip.addEventListener('click', skipNext);
+  btnPrev.addEventListener('click', () => gotoLevel(state.currentIdx - 1, false));
+  btnNext.addEventListener('click', () => gotoLevel(state.currentIdx + 1, false));
+  btnAddPlayer.addEventListener('click', addPlayer);
+  nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addPlayer(); });
+
+  // 空格快速启停
+  document.addEventListener('keydown', (e) => {
+    if (e.target === nameInput) return;
+    if (e.code === 'Space') { e.preventDefault(); startTimer(); }
+  });
+
+  // ---------- 配置面板 ----------
+  const cfgModal = $('config-modal');
+  const cfgLevelsBox = $('cfg-levels');
+
+  // 面板里编辑用的临时配置（点保存才写回 config / localStorage）
+  let draftLevels = [];
+
+  function openConfig() {
+    // 把当前 config 装进输入
+    $('cfg-title').value = config.title || '';
+    $('cfg-date').value = config.date || '';
+    $('cfg-time').value = config.time || '';
+    $('cfg-location').value = config.location || '';
+    $('cfg-buyin-price').value = config.buyinPrice;
+    $('cfg-buyin-max').value = config.maxHands;
+    draftLevels = deepClone(config.levels);
+    renderCfgLevels();
+    cfgModal.classList.add('show');
+  }
+  function closeConfig() { cfgModal.classList.remove('show'); }
+
+  function renderCfgLevels() {
+    $('cfg-levels-count').textContent = draftLevels.length;
+    cfgLevelsBox.innerHTML = draftLevels.map((L, i) => {
+      const lvlName = 'L' + (i + 1);
+      const isFinal = i >= config.finalIndex;  // 决赛圈默认按 L6 以后判定
+      const finalBadge = isFinal ? '<span class="final-badge">决赛</span>' : '';
+      const chipVal = (L.chips == null) ? '' : L.chips;
+      const chipCls = (L.chips == null || L.chips === '') ? 'chip-blank' : '';
+      return `
+        <div class="cfg-level-row${isFinal ? ' final' : ''}">
+          <div class="lvl-label">${lvlName}${finalBadge}</div>
+          <input type="number" min="0" step="1" value="${L.sb}" data-i="${i}" data-k="sb">
+          <input type="number" min="0" step="1" value="${L.bb}" data-i="${i}" data-k="bb">
+          <input type="number" min="1" step="1" value="${L.mins}" data-i="${i}" data-k="mins">
+          <input type="number" min="0" step="1" value="${chipVal}" placeholder="空=停止买入" data-i="${i}" data-k="chips" class="${chipCls}">
+          <button type="button" class="del-level" title="删除本级别" data-del="${i}">✕</button>
+        </div>
+      `;
+    }).join('');
+
+    // 绑定输入事件
+    cfgLevelsBox.querySelectorAll('input').forEach(el => {
+      el.addEventListener('input', () => {
+        const i = +el.dataset.i;
+        const k = el.dataset.k;
+        if (!draftLevels[i]) return;
+        if (k === 'chips') {
+          const v = el.value.trim();
+          draftLevels[i].chips = v === '' ? null : Math.max(0, +v);
+          el.classList.toggle('chip-blank', v === '');
+        } else {
+          const v = Math.max(0, +el.value || 0);
+          draftLevels[i][k] = v;
+        }
+      });
+    });
+    cfgLevelsBox.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (draftLevels.length <= 1) { alert('至少保留一级'); return; }
+        draftLevels.splice(+btn.dataset.del, 1);
+        renderCfgLevels();
+      });
+    });
+  }
+
+  function addDraftLevel() {
+    // 新级别默认复用上一级
+    const last = draftLevels[draftLevels.length - 1] || { sb: 1, bb: 2, mins: 10, chips: null };
+    draftLevels.push({ sb: last.sb, bb: last.bb, mins: last.mins, chips: null });
+    renderCfgLevels();
+  }
+
+  function resetDraftLevels() {
+    if (!confirm('确认把盲注结构恢复为默认 11 级？')) return;
+    draftLevels = deepClone(DEFAULT_CONFIG.levels);
+    renderCfgLevels();
+  }
+
+  function resetAllConfig() {
+    if (!confirm('确认把所有配置项（含基本信息、买入规则、盲注结构）都恢复默认？')) return;
+    $('cfg-title').value = DEFAULT_CONFIG.title;
+    $('cfg-date').value = DEFAULT_CONFIG.date;
+    $('cfg-time').value = DEFAULT_CONFIG.time;
+    $('cfg-location').value = DEFAULT_CONFIG.location;
+    $('cfg-buyin-price').value = DEFAULT_CONFIG.buyinPrice;
+    $('cfg-buyin-max').value = DEFAULT_CONFIG.maxHands;
+    draftLevels = deepClone(DEFAULT_CONFIG.levels);
+    renderCfgLevels();
+  }
+
+  function saveConfigAndApply() {
+    const newCfg = {
+      title: $('cfg-title').value.trim() || '德州酒局',
+      date: $('cfg-date').value || DEFAULT_CONFIG.date,
+      time: $('cfg-time').value || DEFAULT_CONFIG.time,
+      location: $('cfg-location').value.trim() || '',
+      buyinPrice: Math.max(1, +$('cfg-buyin-price').value || DEFAULT_CONFIG.buyinPrice),
+      maxHands: Math.max(1, Math.min(20, +$('cfg-buyin-max').value || DEFAULT_CONFIG.maxHands)),
+      finalIndex: Math.min(DEFAULT_CONFIG.finalIndex, draftLevels.length - 1),  // 若级别总数变少，决赛圈顶格
+      levels: deepClone(draftLevels),
+    };
+    // 校验
+    if (!newCfg.levels.length) { alert('至少保留一级'); return; }
+    for (const L of newCfg.levels) {
+      if (!(L.mins > 0)) { alert('每级时长必须大于 0'); return; }
+    }
+    config = newCfg;
+    saveConfig(config);
+    applyConfig();
+    closeConfig();
+  }
+
+  // 把 config 应用到页面（重算 LEVELS / 常量 / UI）
+  function applyConfig() {
+    LEVELS = expandLevels(config);
+    BUYIN_PRICE = config.buyinPrice;
+    MAX_HANDS = config.maxHands;
+
+    // 当前级别别超出
+    if (state.currentIdx >= LEVELS.length) state.currentIdx = LEVELS.length - 1;
+    // 重置本级倒计时（更改时长后让新时长立刻生效）
+    state.remaining = LEVELS[state.currentIdx].mins * 60;
+    state.ended = false;
+    if (state.running) {
+      // 保持原「运行中」语义：这里就不自动暂停，用户的下一秒就按新参数跑
+    }
+
+    renderMeta();
+    renderLevelsTable();
+    renderTimer();
+    renderPlayers();  // 这个顺带会 renderStats 更新金额
+  }
+
+  // 事件绑定
+  const btnBack = $('btn-back');
+  if (btnBack) {
+    btnBack.addEventListener('click', () => {
+      const hasPending = !!pendingMatch;
+      const msg = hasPending
+        ? '确认取消本场比赛？已记录的买入 / 出局状态不会保存到历史牌局。'
+        : '返回主页？';
+      if (!confirm(msg)) return;
+      try { localStorage.removeItem(LS_PENDING); } catch (e) {}
+      location.href = 'index.html';
+    });
+  }
+  // 旧版齿轮弹窗相关事件（若按钮不存在就跳过）
+  const btnConfig = $('btn-config');
+  if (btnConfig) btnConfig.addEventListener('click', openConfig);
+  $('btn-config-close').addEventListener('click', closeConfig);
+  $('btn-config-cancel').addEventListener('click', closeConfig);
+  $('btn-config-save').addEventListener('click', saveConfigAndApply);
+  $('btn-add-level').addEventListener('click', addDraftLevel);
+  $('btn-reset-levels').addEventListener('click', resetDraftLevels);
+  $('btn-config-reset').addEventListener('click', resetAllConfig);
+  cfgModal.addEventListener('click', (e) => { if (e.target === cfgModal) closeConfig(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && cfgModal.classList.contains('show')) closeConfig();
+  });
+
+  // ---------- 初始化 ----------
+  renderMeta();
+  renderLevelsTable();
+  renderTimer();
+  renderPlayers();
+</script>
+
+</body>
+</html>
